@@ -1,0 +1,23 @@
+{
+  "name": "@tillu/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.45.4",
+    "@tillu/utilities": "workspace:*",
+    "@tillu/logging": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "vitest": "2.1.1",
+    "rimraf": "6.0.1"
+  }
+}
