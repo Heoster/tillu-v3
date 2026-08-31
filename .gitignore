@@ -1,0 +1,47 @@
+# Environment — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# TypeScript
+*.tsbuildinfo
+
+# pnpm
+.pnpm-store/
+
+# Testing
+coverage/
+.vitest/
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+
+# Local agent
+apps/local-agent/data/
+apps/local-agent/.chromium/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# n8n local data
+workflows/n8n/data/
