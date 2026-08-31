@@ -3,6 +3,7 @@ import type { ProviderAdapter } from "./adapters/base.js";
 import type { TaskComplexity } from "./adapters/base.js";
 import { AIUnavailableError, AIOutputValidationError, retry } from "@tillu/utilities";
 import { createLogger } from "@tillu/logging";
+import { getQuotaGuardian } from "./quota-guardian.js";
 
 const logger = createLogger({ service: "model_router" });
 
@@ -87,6 +88,11 @@ export class ModelRouter {
     let lastError: unknown;
 
     for (const provider of available) {
+      // QuotaGuardian: skip provider if quota is exhausted for this task
+      if (!getQuotaGuardian().canUseProvider(provider.name, request.task)) {
+        continue;
+      }
+
       try {
         const result = await retry(
           () =>
@@ -114,6 +120,15 @@ export class ModelRouter {
           total_tokens: result.usage.total_tokens,
           ...request.context,
         });
+
+        // Record usage with QuotaGuardian
+        getQuotaGuardian().recordUsage(
+          provider.name,
+          result.usage.total_tokens,
+          "success",
+          result.model,
+          request.task
+        );
 
         return {
           result: parsed,

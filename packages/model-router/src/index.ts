@@ -18,3 +18,5 @@ export { CerebrasAdapter } from "./adapters/cerebras.js";
 export { OpenRouterAdapter } from "./adapters/openrouter.js";
 export { HFAdapter } from "./adapters/hf.js";
 export { createDefaultRouter } from "./factory.js";
+export { QuotaGuardian, getQuotaGuardian } from "./quota-guardian.js";
+export type { QuotaStatus } from "./quota-guardian.js";
