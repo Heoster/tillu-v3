@@ -1,0 +1,32 @@
+{
+  "name": "@tillu/agent-tutor",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@tillu/agent-sdk": "workspace:*",
+    "@tillu/model-router": "workspace:*",
+    "@tillu/schemas": "workspace:*",
+    "@tillu/utilities": "workspace:*",
+    "@tillu/logging": "workspace:*",
+    "@tillu/database": "workspace:*",
+    "uuid": "10.0.0",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "22.7.4",
+    "@types/uuid": "10.0.0",
+    "rimraf": "6.0.1",
+    "tsx": "4.19.1",
+    "typescript": "5.6.3",
+    "vitest": "2.1.1"
+  }
+}

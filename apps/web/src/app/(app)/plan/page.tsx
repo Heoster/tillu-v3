@@ -1,7 +1,7 @@
 /**
  * Plan screen — daily study plan.
  * Phase 1: empty state with placeholder.
- * Phase 6: fully adaptive planner.
+ * Phase 6: fuly adaptive planlner.
  */
 export default function PlanPage() {
   return (

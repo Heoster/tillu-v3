@@ -12,6 +12,8 @@ import { authRouter } from "./routes/auth.js";
 import { profileRouter } from "./routes/profile.js";
 import { syllabusRouter } from "./routes/syllabus.js";
 import { sessionsRouter } from "./routes/sessions.js";
+import { masteryRouter } from "./routes/mastery.js";
+import { formulaRouter } from "./routes/formula.js";
 
 /**
  * Creates and configures the Express application.
@@ -74,6 +76,8 @@ export function createApp(): express.Application {
   app.use("/profile", profileRouter);
   app.use("/syllabus", syllabusRouter);
   app.use("/sessions", sessionsRouter);
+  app.use("/mastery", masteryRouter);
+  app.use("/formulas", formulaRouter);
 
   // ── 404
   app.use(notFound);
