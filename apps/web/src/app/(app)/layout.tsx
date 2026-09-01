@@ -1,28 +1,31 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { BottomNav } from "@/components/layout/BottomNav";
-import { TopBar } from "@/components/layout/TopBar";
+import { AppShell } from "@/components/shell/AppShell";
 
 /**
- * Authenticated app shell layout.
- * Wraps all protected routes with TopBar + BottomNav.
- * Redirects to login if unauthenticated.
+ * Authenticated app shell.
+ *
+ * Desktop (lg+):  3 zones — Left Nav | Workspace | Tillu Sidebar
+ * Tablet (md):    2 zones — Workspace | Tillu Sidebar (nav collapses)
+ * Mobile (<md):   Full workspace + Bottom Nav + Floating Tillu button
+ *
+ * UI spec §2 — Global UI Shell
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
 
-  if (!user) {
-    redirect("/auth/login");
-  }
+  // Fetch student name for greeting
+  const { data: profile } = await supabase
+    .from("student_profiles")
+    .select("name")
+    .eq("user_id", user.id)
+    .single();
 
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto">
-      <TopBar />
-      <main className="flex-1 overflow-y-auto pb-20 px-4 pt-4">
-        {children}
-      </main>
-      <BottomNav />
-    </div>
+    <AppShell studentName={profile?.name ?? null}>
+      {children}
+    </AppShell>
   );
 }

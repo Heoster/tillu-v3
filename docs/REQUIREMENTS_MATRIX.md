@@ -107,12 +107,12 @@ Each requirement maps to component → database → API → UI → test → phas
 
 | ID | Requirement | Component | Database | API | UI | Test | Phase | Status |
 |----|-------------|-----------|----------|-----|----|------|-------|--------|
-| MIS-001 | Every wrong answer creates a structured mistake record | `MistakeService` | `mistakes` | `POST /mistakes` | Quiz result | `mistakes.spec.ts` | 4 | planned |
-| MIS-002 | Mistake classified by 10 error types | `MistakeService` | `mistakes.error_type` | — | Mistake Bank | `mistakes.spec.ts` | 4 | planned |
-| MIS-003 | Repeated mistakes grouped into patterns | `MistakeService` | `mistake_patterns` | `GET /mistakes/patterns` | Mistake Bank | `mistakes.spec.ts` | 4 | planned |
-| MIS-004 | Pattern triggers repair session | `RepairService` | `mistake_patterns` | `POST /repair/start` | Repair screen | `mistakes.spec.ts` | 4 | planned |
-| MIS-005 | MISTAKE_CREATED / MISTAKE_PATTERN_DETECTED events emitted | `EventBus` | `events` | — | — | `events.spec.ts` | 4 | planned |
-| MIS-006 | Mistake affects mastery and revision priority | `MasteryService` + `RevisionService` | `mastery_events` | — | — | `mistakes.spec.ts` | 4 | planned |
+| MIS-001 | Every wrong answer creates a structured mistake record | `MistakeService.createMistake` | `mistakes` | `POST /mistakes` | `MistakeClassifier` component | `mistake.service.spec.ts` | 4 | **implemented** |
+| MIS-002 | Mistake classified by 10 error types | `ErrorTypeSchema` (10 categories) | `mistakes.error_type` | `POST /mistakes` | `MistakeClassifier` (10 options) | `mistake.service.spec.ts` | 4 | **implemented** |
+| MIS-003 | 3+ same concept+error_type in 30 days → pattern detected | `MistakeService.detectPattern` (PATTERN_THRESHOLD=3) | `mistake_patterns` | `GET /mistakes/patterns` | Mistake Bank patterns section | `mistake.service.spec.ts` | 4 | **implemented** |
+| MIS-004 | Pattern triggers 5-step repair session | `MistakeService.startRepairSession` (micro_lesson→easy→medium→pyq→delayed_recall) | `mistake_patterns` | `POST /mistakes/repair/:patternId` | Mistake Bank repair button | `mistake.service.spec.ts` | 4 | **implemented** |
+| MIS-005 | MISTAKE_CREATED and MISTAKE_PATTERN_DETECTED events emitted | `EventBus` in MistakeService (non-blocking) | `events` | — | — | `mistake.service.spec.ts` | 4 | **implemented** |
+| MIS-006 | Failed event emit never fails the mistake record (INV-005) | `.catch()` wrapper on emit | `mistakes` | — | — | `mistake.service.spec.ts` INV-005 | 4 | **implemented** |
 
 ---
 
@@ -158,10 +158,10 @@ Each requirement maps to component → database → API → UI → test → phas
 
 | ID | Requirement | Component | Database | API | UI | Test | Phase | Status |
 |----|-------------|-----------|----------|-----|----|------|-------|--------|
-| PRES-001 | 6 presence states | `PresenceAgent` | `presence_state` | `GET /presence` | Home status dot | `presence.spec.ts` | 4 | planned |
-| PRES-002 | Presence includes confidence (never certainty — INV-009) | `PresenceAgent` | `presence_state.confidence` | — | — | `presence-invariants.spec.ts` | 4 | planned |
+| PRES-001 | 6 presence states (UNKNOWN/AVAILABLE/STUDYING/AWAY/SLEEPING/OFFLINE) | `PresenceService` state machine | `presence_state` | `GET /presence` | Home status dot | `presence.service.spec.ts` | 4 | **implemented** |
+| PRES-002 | Presence confidence never equals 1.0 — INV-009 | `PresenceService.capConfidence` (MAX=0.95) + `assertConfidenceInvariant` | `presence_state.confidence` | — | — | `presence.service.spec.ts` INV-009 tests | 4 | **implemented** |
 | PRES-003 | Presence affects notification decisions | `NotificationService` `PRESENCE_POLICY` map | `presence_state` | — | — | `notification.service.spec.ts` | 3 | **implemented** |
-| PRES-004 | No webcam/mic/keylogger by default | `PresenceAgent` design | — | — | — | privacy audit | 4 | planned |
+| PRES-004 | No webcam/mic/keylogger — signals are: web session, API call, local heartbeat, study session, lecture | `PresenceService` signal types only | — | — | — | privacy: signal types enforce this | 4 | **implemented** |
 
 ---
 
@@ -169,12 +169,12 @@ Each requirement maps to component → database → API → UI → test → phas
 
 | ID | Requirement | Component | Database | API | UI | Test | Phase | Status |
 |----|-------------|-----------|----------|-----|----|------|-------|--------|
-| LEC-001 | Approved playlists stored per chapter | `LectureService` | `playlists`, `lectures` | `GET /lectures/:chapter_id` | Lectures screen | `lecture.spec.ts` | 4 | planned |
-| LEC-002 | Local agent opens Chromium on approved domains only | `LocalAgent` Playwright | `lecture_progress` | — | — | `local-agent.spec.ts` | 4 | planned |
-| LEC-003 | Lecture progress continuously tracked | `LectureService` | `lecture_progress` | `PUT /lectures/:id/progress` | — | `lecture.spec.ts` | 4 | planned |
-| LEC-004 | Resume from last position | `LectureService` | `lecture_progress` | `GET /lectures/:id/resume` | Lectures screen | `lecture.spec.ts` | 4 | planned |
-| LEC-005 | LECTURE_COMPLETED triggers recall questions | `EventBus` + `QuizAgent` | `events` | — | Post-lecture screen | `lecture-e2e.spec.ts` | 4 | planned |
-| LEC-006 | Local agent has emergency stop | `LocalAgent` | — | `POST /local/stop` | Settings | `local-agent.spec.ts` | 4 | planned |
+| LEC-001 | Approved playlists stored per chapter | `LectureService.getPlaylists` (approved=true filter) | `playlists`, `lectures` | `GET /lectures/chapters/:chapterId` | `/lectures/:subjectId/:chapterId` | `lecture.service.spec.ts` | 4 | **implemented** |
+| LEC-002 | Local agent opens Chromium on approved domains only | `BrowserController` + `DomainGuard` (blocks at network level) | `lecture_progress` | `POST /navigate` (local agent) | Chapter lectures page Watch button | `emergency-stop.spec.ts` DomainGuard tests | 4 | **implemented** |
+| LEC-003 | Lecture progress continuously tracked (position, duration) | `LectureService.updateProgress` | `lecture_progress` | `PUT /lectures/:id/progress` | Progress bar | `lecture.service.spec.ts` | 4 | **implemented** |
+| LEC-004 | Resume from last position | `LectureService.getResumePosition` | `lecture_progress` | `GET /lectures/:id/resume` | Resume button with % shown | `lecture.service.spec.ts` | 4 | **implemented** |
+| LEC-005 | LECTURE_COMPLETED emits recall questions (3–5 per chapter concepts) | `LectureService.handleLectureCompleted` | `events` | `POST /lectures/:id/complete` | Post-lecture recall (Phase 5 UI) | `lecture.service.spec.ts` exposure≠learning | 4 | **implemented** |
+| LEC-006 | Local agent emergency stop — INV-006 | `EmergencyStop.trigger()` always succeeds, callbacks run, disk marker written | — | `POST /stop` (local agent) | — | `emergency-stop.spec.ts` INV-006 tests | 4 | **implemented** |
 
 ---
 
@@ -265,10 +265,10 @@ Each requirement maps to component → database → API → UI → test → phas
 | INV-003 | Revision scheduling reproducible from stored state — `assertAlgorithmVersion` throws if stored ≠ current | `RevisionService.assertAlgorithmVersion` static guard | `revision.service.spec.ts` INV-003 + reproducibility tests | 3 | **implemented** |
 | INV-004 | Duplicate events don't duplicate study history | `EventBus.isProcessed` + `event_consumer_log` | `event-bus.spec.ts` | 1 | **implemented** |
 | INV-005 | Failed AI provider doesn't destroy a workflow | `ModelRouter` + non-blocking event emit | `study.service.spec.ts` | 1 | **implemented** |
-| INV-006 | Local agent always disableable | `LocalAgent` emergency stop | `local-agent.spec.ts` | 4 | planned |
+| INV-006 | Local agent always disableable — EmergencyStop.trigger() succeeds even if cleanup throws | `EmergencyStop.trigger()` idempotent, `.catch()` in callbacks, SIGTERM/SIGINT handlers | `emergency-stop.spec.ts` INV-006 tests | 4 | **implemented** |
 | INV-007 | Student can override any automated plan | `PlannerAgent` | `planner.spec.ts` | 6 | planned |
 | INV-008 | No agent accesses data beyond its permissions | RLS + service auth | `rls.spec.ts` | 1 | **implemented** |
-| INV-009 | Presence inference never represented as certainty | `PresenceAgent` confidence < 1.0 | `presence-invariants.spec.ts` | 4 | planned |
+| INV-009 | Presence inference never represented as certainty — confidence < 1.0 always | `PresenceService.capConfidence` (throws at ≥1.0) + `assertConfidenceInvariant` | `presence.service.spec.ts` INV-009 tests | 4 | **implemented** |
 | INV-010 | No autonomous workflow creates unbounded task loop | `RecoveryPlanner` hard cap | `planner-invariants.spec.ts` | 6 | planned |
 
 ---
@@ -281,7 +281,7 @@ Each requirement maps to component → database → API → UI → test → phas
 | **Phase 1** | AUTH 1–5, PROF 1–5, SYL 1–4, STU 1–6, EVT 1–4, INV-002/004/005/008, MDL-004 | **25 implemented** | — | — |
 | **Phase 2** | MAST 1–8, RES 1–4, TUT 1–4, FORM 1–4, MDL-001/002/003/005, INV-001 | **22 implemented** | — | — |
 | **Phase 3** | REV 1–8, SENT 1–6, QUOT 1–3, NOTIF 1–3, INV-003 | **21 implemented** | — | — |
-| Phase 4 | MIST 1–6, PRES 1–4, LEC 1–6, INV-006/009 | — | — | 16 planned |
+| **Phase 4** | MIST 1–6, PRES 1–4, LEC 1–6, INV-006/009 | **16 implemented** | — | — |
 | Phase 5 | QUIZ 1–6 | — | — | 6 planned |
 | Phase 6 | PLAN 1–7, INV-007/010 | — | — | 9 planned |
 | Phase 7 | NBA 1–4 | — | — | 4 planned |

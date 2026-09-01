@@ -4,13 +4,33 @@
 
 @layer base {
   :root {
-    --color-bg: #030712;
-    --color-surface: #111827;
-    --color-border: #1f2937;
-    --color-accent: #6366f1;
-    --color-accent-hover: #4f46e5;
-    --color-danger: #ef4444;
-    --color-warning: #f59e0b;
-    --color-success: #22c55e;
+    --nav-width:     240px;
+    --sidebar-width: 320px;
+    color-scheme: dark;
   }
+
+  html { @apply bg-gray-950 text-gray-100 antialiased; }
+
+  /* Scrollbar — thin dark */
+  * { scrollbar-width: thin; scrollbar-color: #374151 transparent; }
+  *::-webkit-scrollbar { width: 4px; height: 4px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: #374151; border-radius: 9999px; }
+}
+
+@layer utilities {
+  /* Status dot colors matching UI spec semantic system */
+  .dot-green  { @apply bg-green-400; }
+  .dot-yellow { @apply bg-yellow-400; }
+  .dot-red    { @apply bg-red-500; }
+  .dot-orange { @apply bg-orange-500; }
+  .dot-gray   { @apply bg-gray-600; }
+  .dot-purple { @apply bg-violet-500; }
+
+  /* Card primitives */
+  .card       { @apply bg-gray-900 rounded-2xl border border-gray-800; }
+  .card-hover { @apply hover:border-gray-600 transition-colors; }
+
+  /* Focus ring */
+  .ring-tillu { @apply ring-2 ring-violet-500 ring-offset-1 ring-offset-gray-950; }
 }

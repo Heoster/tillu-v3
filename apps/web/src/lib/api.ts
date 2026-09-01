@@ -168,3 +168,71 @@ export const profileApi = {
       body: JSON.stringify(data),
     }),
 };
+
+// ── Mistakes ──────────────────────────────────────────────────────────────────
+
+export const mistakesApi = {
+  create: (
+    token: string,
+    data: {
+      concept_id:  string;
+      error_type:  string;
+      severity?:   string;
+      cause?:      string;
+      question_id?: string;
+      source?:     string;
+    }
+  ) =>
+    apiFetch<{ mistake: unknown; pattern: unknown | null }>("/mistakes", {
+      method: "POST",
+      token,
+      body: JSON.stringify(data),
+    }),
+
+  getBank: (token: string) =>
+    apiFetch<unknown[]>("/mistakes/bank", { token }),
+
+  getPatterns: (token: string) =>
+    apiFetch<unknown[]>("/mistakes/patterns", { token }),
+
+  startRepair: (token: string, patternId: string) =>
+    apiFetch<unknown>(`/mistakes/repair/${patternId}`, { method: "POST", token }),
+};
+
+// ── Lectures ──────────────────────────────────────────────────────────────────
+
+export const lecturesApi = {
+  getChapterPlaylists: (token: string, chapterId: string) =>
+    apiFetch<unknown>(`/lectures/chapters/${chapterId}`, { token }),
+
+  updateProgress: (
+    token: string,
+    lectureId: string,
+    data: { position_sec: number; duration_sec?: number; completed?: boolean }
+  ) =>
+    apiFetch<unknown>(`/lectures/${lectureId}/progress`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(data),
+    }),
+
+  getResume: (token: string, lectureId: string) =>
+    apiFetch<unknown>(`/lectures/${lectureId}/resume`, { token }),
+
+  complete: (token: string, lectureId: string) =>
+    apiFetch<unknown>(`/lectures/${lectureId}/complete`, { method: "POST", token }),
+};
+
+// ── Presence ──────────────────────────────────────────────────────────────────
+
+export const presenceApi = {
+  get: (token: string) =>
+    apiFetch<unknown>("/presence", { token }),
+
+  signal: (token: string, signal_type: string, metadata?: Record<string, unknown>) =>
+    apiFetch<unknown>("/presence/signal", {
+      method: "PUT",
+      token,
+      body: JSON.stringify({ signal_type, metadata }),
+    }),
+};
