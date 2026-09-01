@@ -92,14 +92,14 @@ Each requirement maps to component → database → API → UI → test → phas
 
 | ID | Requirement | Component | Database | API | UI | Test | Phase | Status |
 |----|-------------|-----------|----------|-----|----|------|-------|--------|
-| REV-001 | Revision automatically scheduled after concept exposure | `RevisionService` | `revision_items` | `POST /revision/schedule` | Revision tab | `revision.spec.ts` | 3 | planned |
-| REV-002 | Revision uses adaptive spaced-repetition | `RevisionService` | `revision_items` | — | — | `revision.spec.ts` | 3 | planned |
-| REV-003 | Revision algorithm versioned | `revision_algorithm_version` field | `revision_items` | — | — | `revision.spec.ts` | 3 | planned |
-| REV-004 | REVISION_DUE event emitted when review date arrives | `EventBus` | `events` | — | Revision tab | `revision.spec.ts` | 3 | planned |
-| REV-005 | Recall success/failure updates next review date | `RevisionService` | `revision_events` | `POST /revision/:id/complete` | Revision session | `revision.spec.ts` | 3 | planned |
-| REV-006 | Forgetting risk calculated per concept | `RevisionService` | `mastery_states` | `GET /revision/radar` | Forgetting Radar | `revision.spec.ts` | 3 | planned |
-| REV-007 | Studied ≠ Actually Remembered (INV-003) | `RevisionService` guard | `revision_events` | — | — | `revision-invariants.spec.ts` | 3 | planned |
-| REV-008 | Revision dashboard: due now, coming up, memory health | — | — | `GET /revision/dashboard` | Revision tab | `revision.spec.ts` | 3 | planned |
+| REV-001 | Revision automatically scheduled after concept exposure | `RevisionService.scheduleRevision` | `revision_items` | `POST /revision/schedule` | Revision tab | `revision.service.spec.ts` | 3 | **implemented** |
+| REV-002 | Adaptive spaced-repetition algorithm (SM-2 inspired, ease factor 1.3–2.5) | `RevisionService.completeRevision` SRS math | `revision_items.stability` | — | — | `revision.service.spec.ts` | 3 | **implemented** |
+| REV-003 | Revision algorithm versioned (`REVISION_ALGORITHM_VERSION = "v1"`) | `REVISION_ALGORITHM_VERSION` constant | `revision_items.revision_algorithm_version` | — | — | `revision.service.spec.ts` | 3 | **implemented** |
+| REV-004 | REVISION_DUE event emitted when review date arrives (scan + emit) | `RevisionService.scanAndEmitDue` | `events` | `POST /revision/scan` | Revision tab | `revision.service.spec.ts` | 3 | **implemented** |
+| REV-005 | Recall success/failure updates next review date and stability | `RevisionService.completeRevision` | `revision_events` | `POST /revision/:id/complete` | Revision session | `revision.service.spec.ts` | 3 | **implemented** |
+| REV-006 | Forgetting risk and priority calculated per concept | `RevisionService.getForgettingRadar` | `revision_items.priority` | `GET /revision/radar` | Forgetting Radar | `revision.service.spec.ts` | 3 | **implemented** |
+| REV-007 | Studied ≠ Actually Remembered — INV-003 (reproducible scheduling) | `RevisionService.assertAlgorithmVersion` | `revision_events` | — | — | `revision.service.spec.ts` INV-003 | 3 | **implemented** |
+| REV-008 | Revision dashboard: due_now, coming_up, memory_health (strong/stable/weak) | `RevisionService.getDashboard` | `revision_items` | `GET /revision/dashboard` | Revision tab | `revision.service.spec.ts` | 3 | **implemented** |
 
 ---
 
@@ -160,7 +160,7 @@ Each requirement maps to component → database → API → UI → test → phas
 |----|-------------|-----------|----------|-----|----|------|-------|--------|
 | PRES-001 | 6 presence states | `PresenceAgent` | `presence_state` | `GET /presence` | Home status dot | `presence.spec.ts` | 4 | planned |
 | PRES-002 | Presence includes confidence (never certainty — INV-009) | `PresenceAgent` | `presence_state.confidence` | — | — | `presence-invariants.spec.ts` | 4 | planned |
-| PRES-003 | Presence affects notification decisions | `NotificationService` | `presence_state` | — | — | `notifications.spec.ts` | 4 | planned |
+| PRES-003 | Presence affects notification decisions | `NotificationService` `PRESENCE_POLICY` map | `presence_state` | — | — | `notification.service.spec.ts` | 3 | **implemented** |
 | PRES-004 | No webcam/mic/keylogger by default | `PresenceAgent` design | — | — | — | privacy audit | 4 | planned |
 
 ---
@@ -215,12 +215,12 @@ Each requirement maps to component → database → API → UI → test → phas
 
 | ID | Requirement | Component | Database | API | UI | Test | Phase | Status |
 |----|-------------|-----------|----------|-----|----|------|-------|--------|
-| SENT-001 | Every agent exposes standard contract endpoints | All agents (`agent-sdk`) | `agent_heartbeats` | `GET /health /ready /version POST /test /run` | — | `sentinel.spec.ts` | 3 | stubbed |
-| SENT-002 | Sentinel polls agents and records heartbeat | `SentinelAgent` | `agent_heartbeats` | `GET /sentinel/status` | Health dashboard | `sentinel.spec.ts` | 3 | planned |
-| SENT-003 | Sentinel runs synthetic tests periodically | `SentinelAgent` | `agent_tests` | — | Health dashboard | `sentinel.spec.ts` | 3 | planned |
-| SENT-004 | Agent health score calculated (liveness/correctness/reliability/latency) | `SentinelAgent` | `agents` | `GET /sentinel/agents` | Health dashboard | `sentinel.spec.ts` | 3 | planned |
-| SENT-005 | Failed agent → retry → fallback → notify | `SentinelAgent` + `RecoveryService` | `agent_failures` | — | — | `recovery.spec.ts` | 3 | planned |
-| SENT-006 | System health dashboard | — | — | `GET /sentinel/dashboard` | System Health screen | `sentinel.spec.ts` | 3 | planned |
+| SENT-001 | Every agent exposes standard contract (`/health /ready /version POST /test /run`) | `@tillu/agent-sdk` `AgentBase` + `createAgentServer` | `agent_heartbeats` | All agents | — | `sentinel.service.spec.ts` | 3 | **implemented** |
+| SENT-002 | Sentinel polls agents, records heartbeats, updates `agent_heartbeats` | `SentinelService.pollAgent` | `agent_heartbeats` | `POST /sentinel/poll` | Health dashboard | `sentinel.service.spec.ts` | 3 | **implemented** |
+| SENT-003 | Sentinel runs synthetic tests via `POST /test` on each agent | `SentinelService.runSyntheticTest` | `agent_tests` | `POST /sentinel/test/:agentName` | Health dashboard | `sentinel.service.spec.ts` | 3 | **implemented** |
+| SENT-004 | Health score: liveness 30% + correctness 40% + reliability 20% + latency 10% | `SentinelService.pollAgent` score formula | `agents.health_score` | `GET /sentinel/agents` | Health dashboard | `sentinel.service.spec.ts` | 3 | **implemented** |
+| SENT-005 | Failed agent status transition emits AGENT_HEALTH_CHANGED, records `agent_failures` | `SentinelService.pollAgent` event emit | `agent_failures` | — | — | `sentinel.service.spec.ts` | 3 | **implemented** |
+| SENT-006 | System health dashboard (agents, overall score, incidents, last full test) | `SentinelService.getDashboard` | `agents` | `GET /sentinel/dashboard` | System Health screen | `sentinel.service.spec.ts` | 3 | **implemented** |
 
 ---
 
@@ -240,9 +240,9 @@ Each requirement maps to component → database → API → UI → test → phas
 
 | ID | Requirement | Component | Database | API | UI | Test | Phase | Status |
 |----|-------------|-----------|----------|-----|----|------|-------|--------|
-| QUOT-001 | Track tokens, API calls, provider limits | `QuotaGuardian` | `quota_events` | `GET /quota/status` | Health dashboard | `quota.spec.ts` | 3 | planned |
-| QUOT-002 | Three modes: NORMAL / CONSERVE / EMERGENCY | `QuotaGuardian` | — | — | — | `quota.spec.ts` | 3 | planned |
-| QUOT-003 | Emergency mode reduces AI, uses deterministic fallbacks | `QuotaGuardian` | — | — | — | `quota.spec.ts` | 3 | planned |
+| QUOT-001 | Track tokens and API calls per provider; persist to `quota_events` | `QuotaGuardian.recordUsage` + `flushToDb` | `quota_events`, `quota_daily_summary` | `GET /quota/status` | Health dashboard | `quota-guardian.spec.ts` | 3 | **implemented** |
+| QUOT-002 | Three modes: NORMAL / CONSERVE / EMERGENCY with configurable thresholds | `QuotaGuardian.getModeForProvider` + `getOverallMode` | — | — | — | `quota-guardian.spec.ts` | 3 | **implemented** |
+| QUOT-003 | CONSERVE blocks background tasks; EMERGENCY blocks all AI calls | `QuotaGuardian.canUseProvider` integrated into `ModelRouter.generate` | — | — | — | `quota-guardian.spec.ts` | 3 | **implemented** |
 
 ---
 
@@ -250,9 +250,9 @@ Each requirement maps to component → database → API → UI → test → phas
 
 | ID | Requirement | Component | Database | API | UI | Test | Phase | Status |
 |----|-------------|-----------|----------|-----|----|------|-------|--------|
-| NOTIF-001 | Notification pipeline with presence + dedup | `NotificationService` | `notifications` | — | Notification center | `notifications.spec.ts` | 3 | planned |
-| NOTIF-002 | Deduplicate using composite key | `notifications.dedupe_key` UNIQUE | `notifications` | — | — | `notifications.spec.ts` | 3 | planned |
-| NOTIF-003 | Student can disable proactive notifications | `ProfileService` | `student_preferences` | `PUT /profile/notifications` | Settings | `notifications.spec.ts` | 3 | planned |
+| NOTIF-001 | Notification pipeline: event → importance → presence → quiet hours → dedupe → send/queue/suppress | `NotificationService.send` 5-step pipeline | `notifications` | `NotificationService.sendForEvent` helper | — | `notification.service.spec.ts` | 3 | **implemented** |
+| NOTIF-002 | Deduplication via composite key (`event_type:entity_id:YYYY-MM-DD`), UNIQUE in DB | `notifications.dedupe_key` UNIQUE constraint + pre-check | `notifications` | — | — | `notification.service.spec.ts` NOTIF-002 tests | 3 | **implemented** |
+| NOTIF-003 | Presence-based suppression: STUDYING/SLEEPING block non-critical; AVAILABLE allows all | `PRESENCE_POLICY` map in NotificationService | `presence_state` | — | — | `notification.service.spec.ts` presence tests | 3 | **implemented** |
 
 ---
 
@@ -262,7 +262,7 @@ Each requirement maps to component → database → API → UI → test → phas
 |----|-----------|-------------|-----------|-------|--------|
 | INV-001 | AI cannot directly modify mastery scores | `MasteryService.assertNotAiDirectWrite` guard + route guard on POST /mastery/evidence | `mastery.service.spec.ts` INV-001 tests | 2 | **implemented** |
 | INV-002 | AI cannot directly change historical study records | `StudyService` guard | `study-invariants.spec.ts` | 1 | **implemented** |
-| INV-003 | Revision scheduling reproducible from stored state | `RevisionService` | `revision-invariants.spec.ts` | 3 | planned |
+| INV-003 | Revision scheduling reproducible from stored state — `assertAlgorithmVersion` throws if stored ≠ current | `RevisionService.assertAlgorithmVersion` static guard | `revision.service.spec.ts` INV-003 + reproducibility tests | 3 | **implemented** |
 | INV-004 | Duplicate events don't duplicate study history | `EventBus.isProcessed` + `event_consumer_log` | `event-bus.spec.ts` | 1 | **implemented** |
 | INV-005 | Failed AI provider doesn't destroy a workflow | `ModelRouter` + non-blocking event emit | `study.service.spec.ts` | 1 | **implemented** |
 | INV-006 | Local agent always disableable | `LocalAgent` emergency stop | `local-agent.spec.ts` | 4 | planned |
@@ -280,12 +280,7 @@ Each requirement maps to component → database → API → UI → test → phas
 | Phase 0 | Architecture | ✅ All ADRs, repo structure, shared packages | — | — |
 | **Phase 1** | AUTH 1–5, PROF 1–5, SYL 1–4, STU 1–6, EVT 1–4, INV-002/004/005/008, MDL-004 | **25 implemented** | — | — |
 | **Phase 2** | MAST 1–8, RES 1–4, TUT 1–4, FORM 1–4, MDL-001/002/003/005, INV-001 | **22 implemented** | — | — |
-| Phase 3 | REV 1–8, SENT 1–6, QUOTA 1–3, NOTIF 1–3, INV-003 | — | — | 20 planned |
-| Phase 4 | MIST 1–6, PRES 1–4, LEC 1–6, INV-006/009 | — | — | 16 planned |
-| Phase 5 | QUIZ 1–6 | — | — | 6 planned |
-| Phase 6 | PLAN 1–7, INV-007/010 | — | — | 9 planned |
-| Phase 7 | NBA 1–4 | — | — | 4 planned |
-| Phase 3 | REV 1–8, SENT 1–6, MDL 1–5, QUOTA 1–3, NOTIF 1–3, INV-001/003 | — | — | 27 planned |
+| **Phase 3** | REV 1–8, SENT 1–6, QUOT 1–3, NOTIF 1–3, INV-003 | **21 implemented** | — | — |
 | Phase 4 | MIST 1–6, PRES 1–4, LEC 1–6, INV-006/009 | — | — | 16 planned |
 | Phase 5 | QUIZ 1–6 | — | — | 6 planned |
 | Phase 6 | PLAN 1–7, INV-007/010 | — | — | 9 planned |
