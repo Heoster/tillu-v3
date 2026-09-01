@@ -20,6 +20,7 @@ import { quotaRouter } from "./routes/quota.js";
 import { mistakesRouter } from "./routes/mistakes.js";
 import { presenceRouter } from "./routes/presence.js";
 import { lecturesRouter } from "./routes/lectures.js";
+import { notificationsRouter } from "./routes/notifications.js";
 
 /**
  * Creates and configures the Express application.
@@ -90,6 +91,7 @@ export function createApp(): express.Application {
   app.use("/mistakes", mistakesRouter);
   app.use("/presence", presenceRouter);
   app.use("/lectures", lecturesRouter);
+  app.use("/notifications", notificationsRouter);
 
   // ── 404
   app.use(notFound);
