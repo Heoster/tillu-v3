@@ -55,16 +55,14 @@ export interface QuotaStatus {
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
 const DEFAULT_DAILY_TOKENS: Record<string, number> = {
-  groq: 100_000,
-  cerebras: 100_000,
-  openrouter: 50_000,
-  huggingface: 30_000,
+  groq:         parseInt(process.env["QUOTA_GROQ_DAILY_TOKENS"]      ?? "100000", 10),
+  cerebras:     parseInt(process.env["QUOTA_CEREBRAS_DAILY_TOKENS"]  ?? "100000", 10),
+  openrouter:   parseInt(process.env["QUOTA_OPENROUTER_DAILY_TOKENS"] ?? "50000",  10),
+  huggingface:  parseInt(process.env["QUOTA_HF_DAILY_TOKENS"]         ?? "30000",  10),
 };
 
-function envNumber(name: string, fallback: number): number {
-  const value = Number(process.env[name]);
-  return Number.isFinite(value) && value > 0 ? value : fallback;
-}
+const CONSERVE_THRESHOLD  = parseFloat(process.env["QUOTA_CONSERVE_THRESHOLD"]  ?? "0.75");
+const EMERGENCY_THRESHOLD = parseFloat(process.env["QUOTA_EMERGENCY_THRESHOLD"] ?? "0.90");
 
 // ── QuotaGuardian ────────────────────────────────────────────────────────────
 
@@ -84,11 +82,10 @@ export class QuotaGuardian {
     // Initialise usage buckets for all known providers
     for (const provider of Object.keys(DEFAULT_DAILY_TOKENS)) {
       this.resetUsage(provider);
-      const envKey = provider === "huggingface" ? "QUOTA_HF_DAILY_TOKENS" : `QUOTA_${provider.toUpperCase()}_DAILY_TOKENS`;
       this.limits.set(provider, {
-        dailyTokens: envNumber(envKey, DEFAULT_DAILY_TOKENS[provider] ?? 100_000),
-        conserveAt:  envNumber("QUOTA_CONSERVE_THRESHOLD", 0.75),
-        emergencyAt: envNumber("QUOTA_EMERGENCY_THRESHOLD", 0.90),
+        dailyTokens: DEFAULT_DAILY_TOKENS[provider] ?? 100_000,
+        conserveAt:  CONSERVE_THRESHOLD,
+        emergencyAt: EMERGENCY_THRESHOLD,
       });
     }
   }
