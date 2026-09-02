@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: tillu-local-agent
+    runtime: docker
+    dockerfilePath: ./agents/local/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: LOCAL_AGENT_SHARED_SECRET
+        sync: false
+      - key: CLOUD_GATEWAY_URL
+        sync: false
+
+# Cloud agents can use the same shape when a long-running worker is preferred.
+# Lightweight agents are intended for separate Vercel projects.
