@@ -16,6 +16,8 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { getServiceClient } from "@tillu/database";
+import { buildCbseQuery } from "./cbse-scraper.js";
+import { formatSearchContext, searchTavily } from "./tavily.js";
 import { getModelRouter } from "@tillu/model-router";
 import { createLogger } from "@tillu/logging";
 import { TilluError, AIUnavailableError } from "@tillu/utilities";
@@ -89,7 +91,13 @@ export async function handleResearch(
     const response = await getModelRouter().generate({
       task: "research",
       systemPrompt: RESEARCH_SYSTEM_PROMPT,
-      userPrompt: buildResearchUserPrompt(query, subject, context),
+      userPrompt: buildResearchUserPrompt(
+        query,
+        subject,
+        [context, formatSearchContext(await searchTavily(buildCbseQuery(query, subject), { maxResults: 6 }))]
+          .filter(Boolean)
+          .join("\n\n")
+      ),
       outputSchema: ResearchOutputSchema,
       complexity: "complex",
       latencyBudgetMs: 30_000,
